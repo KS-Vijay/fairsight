@@ -466,7 +466,6 @@ class BiasDetector:
             'by_attribute': by_attribute,
             'detailed_results': [r.to_dict() for r in results]
         }
-
 # Convenience functions for backward compatibility
 def detect_dataset_bias(df: pd.DataFrame, protected_attributes: List[str], 
                        target_column: str, **kwargs) -> List[BiasDetectionResult]:
@@ -500,3 +499,4 @@ def compute_statistical_parity(df: pd.DataFrame, target: str, feature: str, priv
     """Public wrapper to compute statistical parity difference for a feature."""
     detector = BiasDetector(dataset=df, sensitive_features=[feature], target=target, threshold=threshold, justified_attributes=justified_attributes)
     return detector._compute_statistical_parity_difference(df, target, feature, privileged_val)
+

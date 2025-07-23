@@ -101,6 +101,67 @@ results = auditor.run_audit()
 # Gender/race disparities will still be detected
 ```
 
+## 🚀 Quick Start: One-liner Wrappers
+
+Fairsight provides convenient wrapper functions for the most common bias and fairness analysis tasks. These wrappers let you run a full analysis in a single line of code.
+
+### Dataset Bias Detection (Wrapper)
+```python
+from fairsight import detect_dataset_bias
+import pandas as pd
+
+df = pd.read_csv('data.csv')
+results = detect_dataset_bias(df, protected_attributes=['gender', 'race'], target_column='outcome')
+for r in results:
+    print(r)
+```
+**Output:**
+```
+BiasResult(gender.Disparate Impact: 0.82 [FAIR])
+BiasResult(gender.Statistical Parity Difference: 0.05 [FAIR])
+BiasResult(race.Disparate Impact: 0.76 [BIASED])
+BiasResult(race.Statistical Parity Difference: 0.18 [BIASED])
+```
+
+### Model Bias Detection (Wrapper)
+```python
+from fairsight import detect_model_bias
+from sklearn.ensemble import RandomForestClassifier
+import pandas as pd
+
+df = pd.read_csv('data.csv')
+model = RandomForestClassifier().fit(df.drop('outcome', axis=1), df['outcome'])
+results = detect_model_bias(model, df, protected_attributes=['gender'], target_column='outcome')
+for r in results:
+    print(r)
+```
+
+### Full Dataset Audit (Wrapper)
+```python
+from fairsight import audit_dataset
+import pandas as pd
+
+df = pd.read_csv('data.csv')
+results = audit_dataset(df, protected_attributes=['gender'], target_column='outcome')
+print(results['bias_detection'])
+print(results['fairness_metrics'])
+```
+
+### Full Model Audit (Wrapper)
+```python
+from fairsight import audit_model
+from sklearn.ensemble import RandomForestClassifier
+import pandas as pd
+
+df = pd.read_csv('data.csv')
+X = df.drop('outcome', axis=1)
+y = df['outcome']
+model = RandomForestClassifier().fit(X, y)
+results = audit_model(model, X, y, protected_attributes=['gender'])
+print(results['bias_detection'])
+print(results['fairness_metrics'])
+```
+
 ## 🏗️ Architecture
 
 ```
@@ -330,6 +391,79 @@ auditor = FSAuditor(
         "race": "white"
     }
 )
+```
+
+## 🧑‍💻 Advanced: Core Class Usage
+
+For advanced users, Fairsight exposes all core classes for maximum flexibility and custom workflows.
+
+### BiasDetector (Direct Use)
+```python
+from fairsight import BiasDetector
+import pandas as pd
+
+df = pd.read_csv('data.csv')
+detector = BiasDetector(dataset=df, sensitive_features=['gender'], target='outcome')
+results = detector.detect_bias_on_dataset()
+for r in results:
+    print(r)
+```
+
+### DatasetAuditor (Direct Use)
+```python
+from fairsight import DatasetAuditor
+import pandas as pd
+
+df = pd.read_csv('data.csv')
+auditor = DatasetAuditor(dataset=df, protected_attributes=['gender'], target_column='outcome')
+results = auditor.audit()
+print(results['bias_detection'])
+print(results['fairness_metrics'])
+```
+
+### ModelAuditor (Direct Use)
+```python
+from fairsight import ModelAuditor
+from sklearn.ensemble import RandomForestClassifier
+import pandas as pd
+
+df = pd.read_csv('data.csv')
+X = df.drop('outcome', axis=1)
+y = df['outcome']
+model = RandomForestClassifier().fit(X, y)
+auditor = ModelAuditor(model=model, X_test=X, y_test=y, protected_attributes=['gender'], target_column='outcome')
+results = auditor.audit()
+print(results['bias_detection'])
+print(results['fairness_metrics'])
+```
+
+### FairnessMetrics (Direct Use)
+```python
+from fairsight import FairnessMetrics
+import numpy as np
+
+y_true = np.array([1, 0, 1, 0])
+y_pred = np.array([1, 0, 0, 0])
+protected = np.array([0, 1, 0, 1])
+fm = FairnessMetrics(y_true, y_pred, protected_attr=protected, privileged_group=0)
+print(fm.demographic_parity())
+print(fm.equalized_odds())
+print(fm.predictive_parity())
+```
+
+### ExplainabilityEngine (Direct Use)
+```python
+from fairsight import ExplainabilityEngine
+from sklearn.linear_model import LogisticRegression
+import pandas as pd
+
+df = pd.read_csv('data.csv')
+X = df.drop('outcome', axis=1)
+y = df['outcome']
+model = LogisticRegression().fit(X, y)
+engine = ExplainabilityEngine(model=model, training_data=X, feature_names=list(X.columns))
+shap_result = engine.explain_with_shap(X)
+print(shap_result)
 ```
 
 ## 🤝 Contributing
