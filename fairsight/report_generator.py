@@ -19,6 +19,7 @@ from typing import Dict, List, Any, Optional, Union, Tuple
 import base64
 from io import BytesIO
 import logging
+import pkg_resources
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -676,11 +677,14 @@ class ReportGenerator:
             is_justified = attr_name in justified_attributes
             justified_note = " (Business Justified)" if is_justified else ""
             
+            # Safely format values
+            def fmt(val):
+                return f"{val:.3f}" if isinstance(val, (int, float)) else str(val)
             analysis_lines.extend([
                 f"#### {attr_name.title()}{justified_note}\n",
-                f"**Disparate Impact:** {attr_data.get('disparate_impact', 'N/A'):.3f}  ",
-                f"**Statistical Parity Difference:** {attr_data.get('statistical_parity_difference', 'N/A'):.3f}  ",
-                f"**Equal Opportunity Difference:** {attr_data.get('equal_opportunity_difference', 'N/A'):.3f}  ",
+                f"**Disparate Impact:** {fmt(attr_data.get('disparate_impact', 'N/A'))}  ",
+                f"**Statistical Parity Difference:** {fmt(attr_data.get('statistical_parity_difference', 'N/A'))}  ",
+                f"**Equal Opportunity Difference:** {fmt(attr_data.get('equal_opportunity_difference', 'N/A'))}  ",
             ])
             
             # Interpretation
@@ -690,7 +694,7 @@ class ReportGenerator:
             # Add recommendations if not justified
             if not is_justified:
                 di = attr_data.get('disparate_impact', 1.0)
-                if di < 0.8:
+                if isinstance(di, (int, float)) and di < 0.8:
                     analysis_lines.append("⚠️ **Action Required:** Consider preprocessing techniques to reduce disparate impact.\n")
             else:
                 analysis_lines.append("ℹ️ **Note:** Disparities in this attribute are considered business-justified.\n")
@@ -1080,7 +1084,10 @@ class ReportGenerator:
         markdown_report_path: str,
         model_name: str
     ) -> str:
-        """Generate PDF report from markdown using FPDF."""
+        """Generate PDF report from markdown using FPDF and bundled Unicode font."""
+        def safe_unicode(text):
+            # Remove characters above U+FFFF (most emoji, rare symbols)
+            return ''.join(c for c in text if ord(c) <= 0xFFFF)
         try:
             pdf_path = os.path.join(self.output_dir, f"{model_name}_fairness_report.pdf")
             with open(markdown_report_path, 'r', encoding='utf-8') as f:
@@ -1089,26 +1096,28 @@ class ReportGenerator:
             pdf = FPDF()
             pdf.set_auto_page_break(auto=True, margin=15)
             pdf.add_page()
-            pdf.set_font("Arial", size=12)
+            # Load bundled DejaVuSans.ttf font
+            font_path = pkg_resources.resource_filename('fairsight', 'fonts/DejaVuSans.ttf')
+            pdf.add_font('DejaVu', '', font_path, uni=True)
+            pdf.set_font('DejaVu', '', 12)
 
             for line in lines:
-                # Simple markdown to PDF: handle headers and normal text
+                text = safe_unicode(line.strip())
                 if line.startswith('# '):
-                    pdf.set_font("Arial", 'B', 18)
-                    pdf.cell(0, 10, line[2:].strip(), ln=True)
-                    pdf.set_font("Arial", size=12)
+                    pdf.set_font('DejaVu', '', 18)
+                    pdf.cell(0, 10, safe_unicode(text[2:]), ln=True)
+                    pdf.set_font('DejaVu', '', 12)
                 elif line.startswith('## '):
-                    pdf.set_font("Arial", 'B', 14)
-                    pdf.cell(0, 8, line[3:].strip(), ln=True)
-                    pdf.set_font("Arial", size=12)
+                    pdf.set_font('DejaVu', '', 14)
+                    pdf.cell(0, 8, safe_unicode(text[3:]), ln=True)
+                    pdf.set_font('DejaVu', '', 12)
                 elif line.startswith('### '):
-                    pdf.set_font("Arial", 'B', 12)
-                    pdf.cell(0, 7, line[4:].strip(), ln=True)
-                    pdf.set_font("Arial", size=12)
-                elif line.strip().startswith('!['):
-                    # Try to extract image path from markdown ![alt](path)
+                    pdf.set_font('DejaVu', '', 12)
+                    pdf.cell(0, 7, safe_unicode(text[4:]), ln=True)
+                    pdf.set_font('DejaVu', '', 12)
+                elif text.startswith('!['):
                     import re
-                    m = re.match(r'!\[.*\]\((.*)\)', line.strip())
+                    m = re.match(r'!\[.*\]\((.*)\)', text)
                     if m:
                         img_path = m.group(1)
                         img_full_path = os.path.join(self.output_dir, img_path) if not os.path.isabs(img_path) else img_path
@@ -1116,12 +1125,12 @@ class ReportGenerator:
                             pdf.ln(2)
                             pdf.image(img_full_path, w=100)
                             pdf.ln(2)
-                elif line.strip() == '---':
+                elif text == '---':
                     pdf.ln(5)
                     pdf.cell(0, 0, '', ln=True)
                     pdf.ln(5)
                 else:
-                    pdf.multi_cell(0, 7, line.strip())
+                    pdf.multi_cell(0, 7, text)
             pdf.output(pdf_path)
             return pdf_path
         except Exception as e:

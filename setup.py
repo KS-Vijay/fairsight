@@ -76,6 +76,7 @@ setup(
             "templates/*.html",
             "templates/*.md",
             "config/*.json",
+            "fonts/*.ttf",
         ],
     },
     zip_safe=False,

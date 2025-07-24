@@ -1,6 +1,6 @@
 {
   "audit_metadata": {
-    "timestamp": "2025-07-23T20:47:43.187966",
+    "timestamp": "2025-07-23T23:16:15.745036",
     "fairsight_version": "1.0.0",
     "dataset_provided": true,
     "model_provided": false,
@@ -124,7 +124,21 @@
         }
       }
     ],
-    "fairness_metrics": {},
+    "fairness_metrics": {
+      "category": {
+        "demographic_parity": "<fairsight.fairness_metrics.FairnessResult object at 0x000002A00D849490>",
+        "equal_opportunity": "<fairsight.fairness_metrics.FairnessResult object at 0x000002A00D8030D0>",
+        "equal_false_positive_rate": "<fairsight.fairness_metrics.FairnessResult object at 0x000002A00D849A90>",
+        "predictive_parity": "<fairsight.fairness_metrics.FairnessResult object at 0x000002A00D84A6D0>",
+        "performance_gaps": {
+          "accuracy": "<fairsight.fairness_metrics.FairnessResult object at 0x000002A00D84A390>",
+          "precision": "<fairsight.fairness_metrics.FairnessResult object at 0x000002A00D849590>",
+          "recall": "<fairsight.fairness_metrics.FairnessResult object at 0x000002A00D84A150>",
+          "f1_score": "<fairsight.fairness_metrics.FairnessResult object at 0x000002A00D88E310>"
+        },
+        "is_justified": false
+      }
+    },
     "statistical_analysis": {
       "descriptive_statistics": {
         "category": {
@@ -197,7 +211,7 @@
         "feature": 0.9045340337332909
       }
     },
-    "audit_timestamp": "2025-07-23T20:47:43.265733",
+    "audit_timestamp": "2025-07-23T23:16:15.792960",
     "recommendations": [
       "\ud83d\udea8 Bias detected in attributes: category. Consider data collection improvements or bias mitigation techniques.",
       "\ud83d\udd04 High percentage of duplicate rows detected. Consider deduplication."

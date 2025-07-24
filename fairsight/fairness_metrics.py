@@ -398,6 +398,10 @@ class FairnessMetrics:
         
         return performance_gaps
     
+    def evaluate(self):
+        """Alias for compute_all_metrics for user convenience."""
+        return self.compute_all_metrics()
+    
     def compute_all_metrics(self) -> Dict[str, Union[FairnessResult, Dict[str, FairnessResult]]]:
         """Compute all available fairness metrics."""
         results = {}

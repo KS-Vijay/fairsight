@@ -23,26 +23,21 @@ class Dashboard:
     and creating visualizations in SAP Analytics Cloud.
     """
 
-    def __init__(self, connection_params: Optional[Dict[str, str]] = None):
+    def __init__(self, connection_params: Dict[str, str]):
         """
         Initialize Dashboard with SAP HANA connection parameters.
 
         Args:
             connection_params: Dictionary containing HANA connection details
-                              Should include: host, port, user, password, encrypt
+                              Must include: host, port, user, password, encrypt
+        Raises:
+            ValueError: If connection_params is not provided or missing required keys
         """
-        self.connection_params = connection_params or {}
+        if not connection_params or not all(k in connection_params for k in ["host", "port", "user", "password"]):
+            raise ValueError("connection_params must be provided with keys: host, port, user, password")
+        self.connection_params = connection_params
         self.conn = None
         self.default_schema = "FAIRSIGHT"
-
-        # Default connection parameters (can be overridden)
-        self.default_params = {
-            "host": "d4749caf-d293-4be5-8cde-fdd920efefac.hana.trial-us10.hanacloud.ondemand.com",
-            "port": 443,
-            "user": "DBADMIN", 
-            "password": "FairSight000!",
-            "encrypt": True
-        }
 
     def connect(self) -> bool:
         """
@@ -52,9 +47,7 @@ class Dashboard:
             bool: True if connection successful, False otherwise
         """
         try:
-            # Use provided params or defaults
-            params = {**self.default_params, **self.connection_params}
-
+            params = self.connection_params
             self.conn = dbapi.connect(
                 address=params["host"],
                 port=params["port"],
@@ -62,10 +55,8 @@ class Dashboard:
                 password=params["password"],
                 encrypt=params.get("encrypt", True)
             )
-
             logger.info("✅ Successfully connected to SAP HANA Cloud")
             return True
-
         except Exception as e:
             logger.error(f"❌ Failed to connect to SAP HANA Cloud: {e}")
             self.conn = None
@@ -89,69 +80,99 @@ class Dashboard:
         try:
             cursor = self.conn.cursor()
 
-            # Create schema if not exists
-            cursor.execute(f"CREATE SCHEMA IF NOT EXISTS {self.default_schema}")
+            # Create schema (handle already exists error)
+            try:
+                cursor.execute(f"CREATE SCHEMA {self.default_schema}")
+            except dbapi.Error as e:
+                if "already exists" in str(e) or "SQL error code: 258" in str(e):
+                    pass  # Schema already exists
+                else:
+                    raise
 
             # Audit Sessions table
-            cursor.execute(f"""
-                CREATE TABLE IF NOT EXISTS {self.default_schema}.AUDIT_SESSIONS (
-                    SESSION_ID NVARCHAR(50) PRIMARY KEY,
-                    DATASET_NAME NVARCHAR(200),
-                    MODEL_NAME NVARCHAR(200), 
-                    AUDIT_TYPE NVARCHAR(50),
-                    TIMESTAMP TIMESTAMP,
-                    STATUS NVARCHAR(20),
-                    ETHICAL_SCORE INTEGER,
-                    TOTAL_SAMPLES INTEGER,
-                    PROTECTED_ATTRIBUTES NCLOB,
-                    JUSTIFIED_ATTRIBUTES NCLOB
-                )
-            """)
+            try:
+                cursor.execute(f"""
+                    CREATE TABLE {self.default_schema}.AUDIT_SESSIONS (
+                        SESSION_ID NVARCHAR(50) PRIMARY KEY,
+                        DATASET_NAME NVARCHAR(200),
+                        MODEL_NAME NVARCHAR(200), 
+                        AUDIT_TYPE NVARCHAR(50),
+                        TIMESTAMP TIMESTAMP,
+                        STATUS NVARCHAR(20),
+                        ETHICAL_SCORE INTEGER,
+                        TOTAL_SAMPLES INTEGER,
+                        PROTECTED_ATTRIBUTES NCLOB,
+                        JUSTIFIED_ATTRIBUTES NCLOB
+                    )
+                """)
+            except dbapi.Error as e:
+                if "already exists" in str(e) or "SQL error code: 258" in str(e):
+                    pass
+                else:
+                    raise
 
             # Bias Detection Results table
-            cursor.execute(f"""
-                CREATE TABLE IF NOT EXISTS {self.default_schema}.BIAS_RESULTS (
-                    RESULT_ID NVARCHAR(50) PRIMARY KEY,
-                    SESSION_ID NVARCHAR(50),
-                    ATTRIBUTE_NAME NVARCHAR(100),
-                    METRIC_NAME NVARCHAR(100),
-                    METRIC_VALUE DOUBLE,
-                    THRESHOLD_VALUE DOUBLE,
-                    IS_BIASED BOOLEAN,
-                    IS_JUSTIFIED BOOLEAN,
-                    DETAILS NCLOB,
-                    FOREIGN KEY (SESSION_ID) REFERENCES {self.default_schema}.AUDIT_SESSIONS(SESSION_ID)
-                )
-            """)
+            try:
+                cursor.execute(f"""
+                    CREATE TABLE {self.default_schema}.BIAS_RESULTS (
+                        RESULT_ID NVARCHAR(50) PRIMARY KEY,
+                        SESSION_ID NVARCHAR(50),
+                        ATTRIBUTE_NAME NVARCHAR(100),
+                        METRIC_NAME NVARCHAR(100),
+                        METRIC_VALUE DOUBLE,
+                        THRESHOLD_VALUE DOUBLE,
+                        IS_BIASED BOOLEAN,
+                        IS_JUSTIFIED BOOLEAN,
+                        DETAILS NCLOB,
+                        FOREIGN KEY (SESSION_ID) REFERENCES {self.default_schema}.AUDIT_SESSIONS(SESSION_ID)
+                    )
+                """)
+            except dbapi.Error as e:
+                if "already exists" in str(e) or "SQL error code: 258" in str(e):
+                    pass
+                else:
+                    raise
 
             # Fairness Metrics table
-            cursor.execute(f"""
-                CREATE TABLE IF NOT EXISTS {self.default_schema}.FAIRNESS_METRICS (
-                    METRIC_ID NVARCHAR(50) PRIMARY KEY,
-                    SESSION_ID NVARCHAR(50),
-                    ATTRIBUTE_NAME NVARCHAR(100),
-                    PRECISION_GAP DOUBLE,
-                    RECALL_GAP DOUBLE,
-                    F1_GAP DOUBLE,
-                    DEMOGRAPHIC_PARITY_DIFF DOUBLE,
-                    EQUAL_OPPORTUNITY_DIFF DOUBLE,
-                    FOREIGN KEY (SESSION_ID) REFERENCES {self.default_schema}.AUDIT_SESSIONS(SESSION_ID)
-                )
-            """)
+            try:
+                cursor.execute(f"""
+                    CREATE TABLE {self.default_schema}.FAIRNESS_METRICS (
+                        METRIC_ID NVARCHAR(50) PRIMARY KEY,
+                        SESSION_ID NVARCHAR(50),
+                        ATTRIBUTE_NAME NVARCHAR(100),
+                        PRECISION_GAP DOUBLE,
+                        RECALL_GAP DOUBLE,
+                        F1_GAP DOUBLE,
+                        DEMOGRAPHIC_PARITY_DIFF DOUBLE,
+                        EQUAL_OPPORTUNITY_DIFF DOUBLE,
+                        FOREIGN KEY (SESSION_ID) REFERENCES {self.default_schema}.AUDIT_SESSIONS(SESSION_ID)
+                    )
+                """)
+            except dbapi.Error as e:
+                if "already exists" in str(e) or "SQL error code: 258" in str(e):
+                    pass
+                else:
+                    raise
 
             # Model Performance table
-            cursor.execute(f"""
-                CREATE TABLE IF NOT EXISTS {self.default_schema}.MODEL_PERFORMANCE (
-                    PERFORMANCE_ID NVARCHAR(50) PRIMARY KEY,
-                    SESSION_ID NVARCHAR(50),
-                    ACCURACY DOUBLE,
-                    PRECISION DOUBLE,
-                    RECALL DOUBLE,
-                    F1_SCORE DOUBLE,
-                    ROC_AUC DOUBLE,
-                    FOREIGN KEY (SESSION_ID) REFERENCES {self.default_schema}.AUDIT_SESSIONS(SESSION_ID)
-                )
-            """)
+            try:
+                cursor.execute(f"""
+                    CREATE TABLE {self.default_schema}.MODEL_PERFORMANCE (
+                        PERFORMANCE_ID NVARCHAR(50) PRIMARY KEY,
+                        SESSION_ID NVARCHAR(50),
+                        ACCURACY DOUBLE,
+                        PRECISION DOUBLE,
+                        RECALL DOUBLE,
+                        F1_SCORE DOUBLE,
+                        ROC_AUC DOUBLE,
+                        FOREIGN KEY (SESSION_ID) REFERENCES {self.default_schema}.AUDIT_SESSIONS(SESSION_ID)
+                    )
+                """)
+            except dbapi.Error as e:
+                if "already exists" in str(e) or "SQL error code: 258" in str(e):
+                    pass
+                else:
+                    raise
 
             self.conn.commit()
             logger.info("✅ Successfully created audit tables in SAP HANA")
@@ -365,7 +386,7 @@ class Dashboard:
                         "name": "HANA_FAIRSIGHT",
                         "type": "HANA_CLOUD", 
                         "connection": {
-                            "host": self.connection_params.get("host", self.default_params["host"]),
+                            "host": self.connection_params["host"],
                             "schema": self.default_schema
                         },
                         "tables": [

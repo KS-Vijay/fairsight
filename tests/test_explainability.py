@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from fairsight import ExplainabilityEngine
@@ -14,12 +17,12 @@ def demo_explainability():
     engine = ExplainabilityEngine(model=model, training_data=X, feature_names=['feature1', 'feature2'])
     try:
         shap_result = engine.explain_with_shap(X)
-        print('SHAP explanation:', shap_result)
+        print('SHAP explanation:', shap_result.to_dict())
     except ImportError:
         print('SHAP not installed')
     try:
         lime_result = engine.explain_with_lime(X)
-        print('LIME explanation:', lime_result)
+        print('LIME explanation:', lime_result.to_dict())
     except ImportError:
         print('LIME not installed')
 

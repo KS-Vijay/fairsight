@@ -229,12 +229,13 @@ class FSAuditor:
             logger.error(f"❌ Report generation failed: {e}")
             return {'error': str(e), 'results': results}
 
-    def push_to_dashboard(self, results: Optional[Dict[str, Any]] = None) -> Optional[str]:
+    def push_to_dashboard(self, results: Optional[Dict[str, Any]] = None, connection_params: Optional[Dict[str, str]] = None) -> Optional[str]:
         """
         Push audit results to SAP HANA Cloud dashboard.
 
         Args:
             results: Results to push (uses self.audit_results if None)
+            connection_params: Dictionary with SAP HANA connection details (required)
 
         Returns:
             Session ID if successful, None if failed
@@ -246,12 +247,15 @@ class FSAuditor:
         if results is None:
             results = self.audit_results
 
+        if not connection_params or not all(k in connection_params for k in ["host", "port", "user", "password"]):
+            raise ValueError("connection_params must be provided with keys: host, port, user, password for dashboard push")
+
         logger.info("📊 Pushing results to SAP HANA Cloud...")
 
         try:
             from .dashboard_push import Dashboard
 
-            with Dashboard() as dashboard:
+            with Dashboard(connection_params=connection_params) as dashboard:
                 session_id = dashboard.push(results)
                 self.session_id = session_id
                 logger.info(f"✅ Successfully pushed to dashboard. Session ID: {session_id}")
@@ -261,12 +265,43 @@ class FSAuditor:
             logger.error(f"❌ Dashboard push failed: {e}")
             return None
 
+    def get_audit_history(self, limit: int = 10, connection_params: Optional[Dict[str, str]] = None) -> Optional[pd.DataFrame]:
+        """
+        Get audit history from SAP HANA Cloud.
+
+        Args:
+            limit: Number of recent audits to retrieve
+            connection_params: Dictionary with SAP HANA connection details (required)
+
+        Returns:
+            DataFrame with audit history or None if failed
+        """
+        if not self.enable_sap_integration:
+            logger.info("📊 SAP integration disabled")
+            return None
+
+        if not connection_params or not all(k in connection_params for k in ["host", "port", "user", "password"]):
+            raise ValueError("connection_params must be provided with keys: host, port, user, password for audit history retrieval")
+
+        try:
+            from .dashboard_push import Dashboard
+
+            with Dashboard(connection_params=connection_params) as dashboard:
+                history = dashboard.get_audit_history(limit)
+                logger.info(f"✅ Retrieved {len(history)} audit records")
+                return history
+
+        except Exception as e:
+            logger.error(f"❌ Failed to retrieve audit history: {e}")
+            return None
+
     def run_audit(self, 
                   include_dataset: bool = True,
                   include_model: bool = True,
                   include_bias_detection: bool = True,
                   generate_report: bool = True,
-                  push_to_dashboard: bool = True) -> Dict[str, Any]:
+                  push_to_dashboard: bool = True,
+                  connection_params: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
         """
         Run comprehensive audit with all components.
 
@@ -276,6 +311,7 @@ class FSAuditor:
             include_bias_detection: Whether to include bias detection
             generate_report: Whether to generate report
             push_to_dashboard: Whether to push to dashboard
+            connection_params: Dictionary with SAP HANA connection details (required if push_to_dashboard is True)
 
         Returns:
             Complete audit results
@@ -325,7 +361,7 @@ class FSAuditor:
 
         # Push to dashboard
         if push_to_dashboard:
-            session_id = self.push_to_dashboard(audit_results)
+            session_id = self.push_to_dashboard(audit_results, connection_params=connection_params)
             if session_id:
                 audit_results['session_id'] = session_id
 
@@ -411,61 +447,6 @@ class FSAuditor:
             )
 
         return summary
-
-    def get_audit_history(self, limit: int = 10) -> Optional[pd.DataFrame]:
-        """
-        Get audit history from SAP HANA Cloud.
-
-        Args:
-            limit: Number of recent audits to retrieve
-
-        Returns:
-            DataFrame with audit history or None if failed
-        """
-        if not self.enable_sap_integration:
-            logger.info("📊 SAP integration disabled")
-            return None
-
-        try:
-            from .dashboard_push import Dashboard
-
-            with Dashboard() as dashboard:
-                history = dashboard.get_audit_history(limit)
-                logger.info(f"✅ Retrieved {len(history)} audit records")
-                return history
-
-        except Exception as e:
-            logger.error(f"❌ Failed to retrieve audit history: {e}")
-            return None
-
-    def export_results(self, filepath: str, format: str = 'json') -> bool:
-        """
-        Export audit results to file.
-
-        Args:
-            filepath: Output file path
-            format: Export format ('json', 'csv')
-
-        Returns:
-            True if successful, False otherwise
-        """
-        try:
-            if format.lower() == 'json':
-                with open(filepath, 'w') as f:
-                    json.dump(self.audit_results, f, indent=2, default=str)
-            elif format.lower() == 'csv':
-                # Flatten results for CSV export
-                df = pd.json_normalize(self.audit_results)
-                df.to_csv(filepath, index=False)
-            else:
-                raise ValueError(f"Unsupported format: {format}")
-
-            logger.info(f"✅ Results exported to {filepath}")
-            return True
-
-        except Exception as e:
-            logger.error(f"❌ Export failed: {e}")
-            return False
 
 # Legacy compatibility class
 class Auditor(FSAuditor):
