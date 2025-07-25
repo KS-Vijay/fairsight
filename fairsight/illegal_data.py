@@ -21,6 +21,7 @@ from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
 from tqdm import tqdm
+import pandas as pd
 
 __all__ = ["IllegalDataDetector", "Violation"]
 
@@ -108,3 +109,16 @@ class IllegalDataDetector:
                     )
                     break  # one hit is enough
         return flagged
+
+
+def detect_illegal_data(df: pd.DataFrame, *args, **kwargs):
+    """
+    Standalone illegal data detection function.
+    Args:
+        df: DataFrame to check
+        *args, **kwargs: Passed to IllegalDataDetector
+    Returns:
+        List of detected violations or issues
+    """
+    detector = IllegalDataDetector(*args, **kwargs)
+    return detector.detect(df)

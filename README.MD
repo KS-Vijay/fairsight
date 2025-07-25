@@ -466,6 +466,66 @@ shap_result = engine.explain_with_shap(X)
 print(shap_result)
 ```
 
+## 🧩 Standalone Utilities (Quick Use)
+
+Fairsight exposes key utilities as standalone functions for maximum flexibility. You can use these independently of the main pipeline:
+
+```python
+from fairsight import (
+    explain_with_shap, explain_with_lime, detect_illegal_data,
+    preprocess_data, calculate_privilege_groups, generate_html_report
+)
+
+# Preprocessing
+df_processed, encoders = preprocess_data(df, target_column='outcome', protected_attributes=['gender'])
+
+# Privilege group calculation
+priv_groups = calculate_privilege_groups(df, ['gender'])
+
+# Illegal data detection
+illegal_results = detect_illegal_data(df)
+
+# Explainability (SHAP & LIME)
+shap_result = explain_with_shap(model, X, feature_names)
+lime_result = explain_with_lime(model, X, feature_names)
+
+# Quick HTML report
+dummy_bias = {'gender': {'statistical_parity': 0.1}}
+dummy_fairness = {'gender': {'demographic_parity': 0.12}}
+report_path = generate_html_report(dummy_bias, dummy_fairness, model_name='DemoModel')
+print(f"HTML report at: {report_path}")
+```
+
+---
+
+## 📚 References & Citations
+
+### Algorithms & Metrics
+- **Reweighing (Bias Mitigation):**
+  - Kamiran, F., & Calders, T. (2012). Data preprocessing techniques for classification without discrimination. Knowledge and Information Systems, 33(1), 1-33. [Springer Link](https://link.springer.com/article/10.1007/s10115-011-0463-8)
+- **Fairness Metrics:**
+  - Demographic Parity, Equalized Odds, Equal Opportunity, Predictive Parity, Disparate Impact, Statistical Parity, etc. are based on open academic literature, e.g.:
+    - Hardt, M., Price, E., & Srebro, N. (2016). Equality of Opportunity in Supervised Learning. NeurIPS. [arXiv](https://arxiv.org/abs/1610.02413)
+    - Feldman, M., et al. (2015). Certifying and removing disparate impact. KDD. [arXiv](https://arxiv.org/abs/1412.3756)
+    - Barocas, S., Hardt, M., & Narayanan, A. (2019). Fairness and Machine Learning. [fairmlbook.org](https://fairmlbook.org/)
+- **Explainability:**
+  - SHAP: Lundberg, S. M., & Lee, S.-I. (2017). A Unified Approach to Interpreting Model Predictions. NeurIPS. [arXiv](https://arxiv.org/abs/1705.07874)
+  - LIME: Ribeiro, M. T., Singh, S., & Guestrin, C. (2016). "Why Should I Trust You?": Explaining the Predictions of Any Classifier. KDD. [arXiv](https://arxiv.org/abs/1602.04938)
+- **Generalized Entropy Index:**
+  - Speicher, T., et al. (2018). A Unified Approach to Quantifying Algorithmic Unfairness: Measuring Individual & Group Unfairness via Inequality Indices. KDD. [arXiv](https://arxiv.org/abs/1807.00799)
+
+### Libraries Used
+- **scikit-learn** (BSD-3-Clause License): Machine learning models and utilities
+- **pandas** (BSD-3-Clause License): Data processing
+- **numpy** (BSD License): Numerical computing
+- **SHAP** (MIT License): Model explainability
+- **LIME** (MIT License): Model explainability
+- **matplotlib, seaborn** (matplotlib: PSF License, seaborn: BSD): Visualization
+
+All algorithms and metrics are implemented based on open academic literature and open-source libraries. No proprietary or closed-source code is used.
+
+---
+
 ## 🤝 Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.

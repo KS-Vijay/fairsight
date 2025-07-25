@@ -276,3 +276,15 @@ class Utils:
             'categorical_columns': len(df.select_dtypes(include=['object', 'category']).columns),
             'memory_usage_mb': df.memory_usage(deep=True).sum() / 1024 / 1024
         }
+
+def preprocess_data(df, target_column, protected_attributes, justified_attributes=None):
+    """
+    Standalone wrapper for Utils.preprocess_data.
+    """
+    return Utils.preprocess_data(df, target_column, protected_attributes, justified_attributes)
+
+def calculate_privilege_groups(df, protected_attributes):
+    """
+    Standalone wrapper for Utils.calculate_privilege_groups.
+    """
+    return Utils.calculate_privilege_groups(df, protected_attributes)

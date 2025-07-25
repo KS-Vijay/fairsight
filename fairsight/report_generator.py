@@ -1367,3 +1367,17 @@ def calculate_model_ethical_score(
         bias_results, fairness_results, justified_attributes
     )
     return score, breakdown['assessment']
+
+def generate_html_report(bias_results, fairness_results, model_name='Model', output_dir='/tmp/fairsight_reports'):
+    """
+    Standalone HTML report generation function.
+    Args:
+        bias_results: Bias analysis results
+        fairness_results: Fairness analysis results
+        model_name: Name of the model
+        output_dir: Directory to save the report
+    Returns:
+        Path to generated HTML report
+    """
+    generator = ReportGenerator(output_dir=output_dir)
+    return generator.generate_html_report(model_name=model_name, bias_results=bias_results, fairness_results=fairness_results)

@@ -572,3 +572,58 @@ def explain_model_lime(model, X_train, X_test, feature_names, **kwargs):
     """Quick LIME explanation function."""
     engine = ExplainabilityEngine(model, X_train, feature_names, **kwargs)
     return engine.explain_with_lime(X_test)
+
+
+def explain_with_shap(model, X, feature_names, mode="classification", training_data=None, protected_attributes=None, justified_attributes=None):
+    """
+    Standalone SHAP explanation function.
+    Args:
+        model: Trained model
+        X: DataFrame to explain
+        feature_names: List of feature names
+        mode: 'classification' or 'regression'
+        training_data: DataFrame used for training (defaults to X)
+        protected_attributes: List of protected attribute names
+        justified_attributes: List of justified attribute names
+    Returns:
+        ExplainabilityResult
+    """
+    if training_data is None:
+        training_data = X
+    engine = ExplainabilityEngine(
+        model=model,
+        training_data=training_data,
+        feature_names=feature_names,
+        mode=mode,
+        protected_attributes=protected_attributes,
+        justified_attributes=justified_attributes
+    )
+    return engine.explain_with_shap(X)
+
+def explain_with_lime(model, X, feature_names, mode="classification", training_data=None, protected_attributes=None, justified_attributes=None, num_samples=5, num_features=10):
+    """
+    Standalone LIME explanation function.
+    Args:
+        model: Trained model
+        X: DataFrame to explain
+        feature_names: List of feature names
+        mode: 'classification' or 'regression'
+        training_data: DataFrame used for training (defaults to X)
+        protected_attributes: List of protected attribute names
+        justified_attributes: List of justified attribute names
+        num_samples: Number of samples to explain
+        num_features: Number of features to show in explanation
+    Returns:
+        ExplainabilityResult
+    """
+    if training_data is None:
+        training_data = X
+    engine = ExplainabilityEngine(
+        model=model,
+        training_data=training_data,
+        feature_names=feature_names,
+        mode=mode,
+        protected_attributes=protected_attributes,
+        justified_attributes=justified_attributes
+    )
+    return engine.explain_with_lime(X, num_samples=num_samples, num_features=num_features)
