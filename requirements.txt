@@ -3,6 +3,8 @@ pandas>=1.3.0
 numpy>=1.21.0
 scikit-learn>=1.0.0
 
+# No extra dependencies required for Reweighing demo (uses pandas only)
+
 # Explainability
 shap>=0.40.0
 lime>=0.2.0

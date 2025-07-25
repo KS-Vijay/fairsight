@@ -25,6 +25,9 @@ from .dashboard_push import Dashboard #SAPHANAConnector
 from .explainability import ExplainabilityEngine, ExplainabilityResult
 from .fairness_metrics import FairnessEngine, FairnessMetrics
 from .utils import Utils
+from .data_fingerprint import DataFingerprintEngine, DuplicateRecord
+from .illegal_data import IllegalDataDetector
+from .reweighing import Reweighing
 
 # Convenience imports for quick access
 from .bias_detection import (
@@ -75,6 +78,15 @@ __all__ = [
     
     # Utilities
     "Utils",
+
+    #Data Fingerprint
+    "DataFingerprintEngine",
+    "DuplicateRecord",
+
+    #Illegal Data
+    "IllegalDataDetector",
+    # Bias mitigation
+    "Reweighing",
 ]
 
 # Package metadata

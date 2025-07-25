@@ -802,3 +802,32 @@ def compute_predictive_parity(y_true, y_pred, protected_attr, privileged_group=1
     """Quick predictive parity calculation."""
     fm = FairnessMetrics(y_true, y_pred, protected_attr=protected_attr, privileged_group=privileged_group)
     return fm.predictive_parity()
+
+
+def generalized_entropy_index(values, alpha=2):
+    """
+    Compute the Generalized Entropy Index (GEI) for a 1D array of values.
+    GEI measures inequality; lower values indicate more equality.
+    Args:
+        values: 1D array-like of non-negative values (e.g., predicted probabilities, incomes)
+        alpha: Parameter (default 2). alpha=0: mean log deviation, alpha=1: Theil index, alpha=2: half squared coefficient of variation
+    Returns:
+        GEI value (float)
+    """
+    values = np.asarray(values)
+    values = values[values >= 0]  # Only non-negative values
+    mean = np.mean(values)
+    if mean == 0 or len(values) == 0:
+        return 0.0
+    if alpha == 0:
+        # Mean log deviation
+        return np.mean(np.log(mean / values))
+    elif alpha == 1:
+        # Theil index
+        return np.mean(values / mean * np.log(values / mean))
+    else:
+        # General case
+        return (1 / (alpha * (alpha - 1))) * np.mean((values / mean) ** alpha - 1)
+
+# Example usage (not run):
+# gei = generalized_entropy_index([0.2, 0.5, 0.3], alpha=2)
