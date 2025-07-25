@@ -41,3 +41,4 @@ catboost>=0.26.0
 # Async and performance
 asyncio-throttle>=1.0.0
 numba>=0.56.0
+imagehash>=4.3.1

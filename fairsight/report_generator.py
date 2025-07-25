@@ -1380,4 +1380,10 @@ def generate_html_report(bias_results, fairness_results, model_name='Model', out
         Path to generated HTML report
     """
     generator = ReportGenerator(output_dir=output_dir)
-    return generator.generate_html_report(model_name=model_name, bias_results=bias_results, fairness_results=fairness_results)
+    files = generator.generate_complete_report(
+        model_name=model_name,
+        bias_results=bias_results,
+        fairness_results=fairness_results,
+        formats=["html"]
+    )
+    return files.get("html", "")

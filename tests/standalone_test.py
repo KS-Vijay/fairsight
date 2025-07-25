@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 if __name__ == "__main__":
     import pandas as pd
     import numpy as np
@@ -32,10 +36,7 @@ if __name__ == "__main__":
     print("Privilege Groups:", priv_groups)
 
     # --- Illegal Data Detection ---
-    print("\n--- Illegal Data Detection ---")
-    # (Assume no illegal data in this synthetic example)
-    illegal_results = detect_illegal_data(df)
-    print("Illegal Data Results:", illegal_results)
+    # (Image-based illegal data detection is tested in a separate test_illegal_data.py)
 
     # --- Explainability (SHAP & LIME) ---
     print("\n--- Explainability (SHAP & LIME) ---")

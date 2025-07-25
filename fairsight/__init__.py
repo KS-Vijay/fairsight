@@ -20,13 +20,13 @@ from .auditor import FSAuditor, Auditor
 from .dataset_audit import DatasetAuditor
 from .model_audit import ModelAuditor
 from .bias_detection import BiasDetector, BiasDetectionResult
-from .report_generator import ReportGenerator, Report
+from .report_generator import ReportGenerator, Report, generate_html_report
 from .dashboard_push import Dashboard #SAPHANAConnector
 from .explainability import ExplainabilityEngine, ExplainabilityResult, explain_with_shap, explain_with_lime
 from .fairness_metrics import FairnessEngine, FairnessMetrics
 from .utils import Utils, preprocess_data, calculate_privilege_groups
 from .data_fingerprint import DataFingerprintEngine, DuplicateRecord
-from .illegal_data import IllegalDataDetector, detect_illegal_data
+from .illegal_data import IllegalDataDetector
 from .reweighing import Reweighing
 
 # Convenience imports for quick access
@@ -90,7 +90,6 @@ __all__ = [
     # Standalone utilities
     "explain_with_shap",
     "explain_with_lime",
-    "detect_illegal_data",
     "preprocess_data",
     "calculate_privilege_groups",
     "generate_html_report",
