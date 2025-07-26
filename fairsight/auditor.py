@@ -13,6 +13,7 @@ import logging
 from datetime import datetime
 import json
 import warnings
+from .auth import verify, APIKeyVerificationError, require_premium_access, TieredAccessError
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +39,9 @@ class FSAuditor:
                  justified_attributes: Optional[List[str]] = None,
                  privileged_groups: Optional[Dict[str, Any]] = None,
                  fairness_threshold: float = 0.8,
-                 enable_sap_integration: bool = True):
+                 enable_sap_integration: bool = True,
+                 user_api_key: Optional[str] = None,
+                 api_base_url: str = "http://localhost:5000"):
         """
         Initialize FSAuditor.
 
@@ -65,6 +68,8 @@ class FSAuditor:
         self.privileged_groups = privileged_groups or {}
         self.fairness_threshold = fairness_threshold
         self.enable_sap_integration = enable_sap_integration
+        self.user_api_key = user_api_key
+        self.api_base_url = api_base_url
 
         # Results storage
         self.audit_results = {}
@@ -109,6 +114,7 @@ class FSAuditor:
             logger.warning("⚠️ No dataset provided, skipping dataset audit")
             return {}
 
+        # Basic dataset audit is free - no API key required
         logger.info("📊 Running dataset audit...")
 
         try:
@@ -140,6 +146,7 @@ class FSAuditor:
             logger.warning("⚠️ No model provided, skipping model audit")
             return {}
 
+        # Basic model audit is free - no API key required
         logger.info("🤖 Running model audit...")
 
         try:
@@ -211,6 +218,13 @@ class FSAuditor:
         Returns:
             Generated report
         """
+        # Advanced reporting is a premium feature - requires API key
+        try:
+            require_premium_access("advanced_reporting", self.user_api_key, self.api_base_url)
+        except TieredAccessError as e:
+            logger.error(f"❌ {e}")
+            raise
+
         logger.info("📝 Generating comprehensive report...")
 
         if results is None:
@@ -240,6 +254,13 @@ class FSAuditor:
         Returns:
             Session ID if successful, None if failed
         """
+        # Dashboard integration is a premium feature - requires API key
+        try:
+            require_premium_access("dashboard_integration", self.user_api_key, self.api_base_url)
+        except TieredAccessError as e:
+            logger.error(f"❌ {e}")
+            raise
+
         if not self.enable_sap_integration:
             logger.info("📊 SAP integration disabled, skipping dashboard push")
             return None
@@ -276,6 +297,13 @@ class FSAuditor:
         Returns:
             DataFrame with audit history or None if failed
         """
+        # SAP HANA integration is a premium feature - requires API key
+        try:
+            require_premium_access("sap_hana_integration", self.user_api_key, self.api_base_url)
+        except TieredAccessError as e:
+            logger.error(f"❌ {e}")
+            raise
+
         if not self.enable_sap_integration:
             logger.info("📊 SAP integration disabled")
             return None
@@ -316,6 +344,13 @@ class FSAuditor:
         Returns:
             Complete audit results
         """
+        # Comprehensive audit is a premium feature - requires API key
+        try:
+            require_premium_access("comprehensive_audit", self.user_api_key, self.api_base_url)
+        except TieredAccessError as e:
+            logger.error(f"❌ {e}")
+            raise
+
         logger.info("🚀 Starting comprehensive Fairsight audit...")
 
         audit_results = {

@@ -13,6 +13,7 @@ from typing import List, Dict, Any, Optional, Union, Tuple
 import logging
 import warnings
 from .utils import Utils
+from .auth import verify, APIKeyVerificationError
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,9 @@ class DatasetAuditor:
                  dataset: Union[str, pd.DataFrame], 
                  protected_attributes: Optional[List[str]] = None, 
                  target_column: Optional[str] = None,
-                 justified_attributes: Optional[List[str]] = None):
+                 justified_attributes: Optional[List[str]] = None,
+                 user_api_key: Optional[str] = None,
+                 api_base_url: str = "http://localhost:5000"):
         """
         Initialize DatasetAuditor.
 
@@ -50,6 +53,8 @@ class DatasetAuditor:
         self.target_column = target_column
         self.label_encoders = {}
         self.task_type = None
+        self.user_api_key = user_api_key
+        self.api_base_url = api_base_url
 
         # Load and preprocess dataset
         self._load_dataset(dataset)
@@ -388,6 +393,8 @@ class DatasetAuditor:
         """
         logger.info("🚀 Starting comprehensive dataset audit...")
 
+        # Basic dataset audit is free - no API key required
+
         # Preprocess data
         preprocessing_info = self.preprocess()
 
@@ -475,12 +482,16 @@ class DatasetAuditor:
 def audit_dataset(dataset: Union[str, pd.DataFrame], 
                  protected_attributes: List[str],
                  target_column: Optional[str] = None,
+                 user_api_key: Optional[str] = None,
+                 api_base_url: str = "http://localhost:5000",
                  **kwargs) -> Dict[str, Any]:
     """Convenience function for dataset auditing."""
     auditor = DatasetAuditor(
         dataset=dataset,
         protected_attributes=protected_attributes,
         target_column=target_column,
+        user_api_key=user_api_key,
+        api_base_url=api_base_url,
         **kwargs
     )
     return auditor.audit()

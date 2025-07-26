@@ -1,8 +1,12 @@
 import os
 import glob
 import json
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from PIL import Image
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from ..auth import require_premium_access, TieredAccessError
 
 try:
     import torch
@@ -22,13 +26,22 @@ except ImportError:
     imagehash = None
 
 class IllegalDataDetector:
-    def __init__(self, pipeline, reference_folder: str, device: str = "cuda", phash_threshold: int = 8):
+    def __init__(self, pipeline, reference_folder: str, device: str = "cuda", phash_threshold: int = 8, 
+                 user_api_key: Optional[str] = None, api_base_url: str = "http://localhost:5000"):
+        # Illegal data detection is a premium feature - requires API key
+        try:
+            require_premium_access("illegal_data_detection", user_api_key, api_base_url)
+        except TieredAccessError as e:
+            raise e
+        
         if torch is None or open_clip is None or imagehash is None:
             raise ImportError("Required libraries 'torch', 'open_clip_torch', and 'imagehash' must be installed.")
         self.pipeline = pipeline
         self.reference_folder = reference_folder
         self.device = device
         self.phash_threshold = phash_threshold
+        self.user_api_key = user_api_key
+        self.api_base_url = api_base_url
         self.reference_images = self._load_reference_images(reference_folder)
         self.model, _, self.preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')
         self.model = self.model.to(device)
@@ -64,6 +77,12 @@ class IllegalDataDetector:
         return hashes
 
     def inject_probes(self, prompts: List[str], num_images: int = 1) -> Dict[str, List[str]]:
+        # Verify premium access for probe injection
+        try:
+            require_premium_access("illegal_data_detection", self.user_api_key, self.api_base_url)
+        except TieredAccessError as e:
+            raise e
+            
         if StableDiffusionPipeline is None:
             raise ImportError("diffusers library is required for image generation.")
         os.makedirs("generated_probes", exist_ok=True)
@@ -79,6 +98,12 @@ class IllegalDataDetector:
         return results
 
     def check_illegal_data(self, prompts: List[str], threshold: float = 0.75, phash_threshold: int = None) -> List[Dict[str, Any]]:
+        # Verify premium access for illegal data checking
+        try:
+            require_premium_access("illegal_data_detection", self.user_api_key, self.api_base_url)
+        except TieredAccessError as e:
+            raise e
+            
         if phash_threshold is None:
             phash_threshold = self.phash_threshold
         probe_dict = self.inject_probes(prompts)
@@ -129,5 +154,47 @@ class IllegalDataDetector:
         return report
 
     def save_report(self, report: Any, path: str = "illegal_report.json"):
+        # Verify premium access for report saving
+        try:
+            require_premium_access("illegal_data_detection", self.user_api_key, self.api_base_url)
+        except TieredAccessError as e:
+            raise e
+            
         with open(path, "w", encoding="utf-8") as f:
-            json.dump(report, f, indent=2, ensure_ascii=False) 
+            json.dump(report, f, indent=2, ensure_ascii=False)
+
+# Convenience function for illegal data detection
+def detect_illegal_data(pipeline, reference_folder: str, prompts: List[str], 
+                       device: str = "cuda", phash_threshold: int = 8,
+                       user_api_key: Optional[str] = None, 
+                       api_base_url: str = "http://localhost:5000",
+                       **kwargs) -> List[Dict[str, Any]]:
+    """
+    Convenience function for illegal data detection with premium access control.
+    
+    Args:
+        pipeline: Stable Diffusion pipeline
+        reference_folder: Folder containing reference images
+        prompts: List of prompts to check
+        device: Device to use for computation
+        phash_threshold: pHash threshold for similarity
+        user_api_key: API key for premium access
+        api_base_url: Base URL for API verification
+        **kwargs: Additional arguments for IllegalDataDetector
+        
+    Returns:
+        List of detection results
+        
+    Raises:
+        TieredAccessError: If premium access is required but not provided
+    """
+    detector = IllegalDataDetector(
+        pipeline=pipeline,
+        reference_folder=reference_folder,
+        device=device,
+        phash_threshold=phash_threshold,
+        user_api_key=user_api_key,
+        api_base_url=api_base_url,
+        **kwargs
+    )
+    return detector.check_illegal_data(prompts) 

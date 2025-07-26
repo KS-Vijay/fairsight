@@ -29,6 +29,18 @@ from .data_fingerprint import DataFingerprintEngine, DuplicateRecord
 from .illegal_data import IllegalDataDetector
 from .reweighing import Reweighing
 
+# Tiered Access System
+from .auth import (
+    require_premium_access, 
+    is_premium_feature, 
+    get_feature_tier, 
+    list_premium_features, 
+    list_free_features,
+    FeatureTier,
+    TieredAccessError,
+    APIKeyVerificationError
+)
+
 # Convenience imports for quick access
 from .bias_detection import (
     detect_dataset_bias,
@@ -85,6 +97,7 @@ __all__ = [
 
     #Illegal Data
     "IllegalDataDetector",
+    "detect_illegal_data",
     # Bias mitigation
     "Reweighing",
     # Standalone utilities
