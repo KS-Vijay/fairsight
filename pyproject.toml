@@ -123,7 +123,7 @@ Repository = "https://github.com/KS-Vijay/fairsight"
 "Source" = "https://github.com/KS-Vijay/fairsight"
 
 [project.scripts]
-fairsight-audit = "fairsight.cli:main"
+fairsight = "fairsight.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["fairsight*"]

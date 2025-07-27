@@ -1,4 +1,6 @@
 import requests
+import json
+from pathlib import Path
 from typing import Optional, Dict, Any
 from enum import Enum
 
@@ -13,6 +15,22 @@ class APIKeyVerificationError(Exception):
 class TieredAccessError(Exception):
     """Exception raised when trying to access premium features without valid API key."""
     pass
+
+
+def _load_api_key_from_config() -> Optional[str]:
+    """Load API key from the configuration file."""
+    try:
+        home = Path.home()
+        config_file = home / ".fairsight" / "config.json"
+        
+        if config_file.exists():
+            with open(config_file, 'r') as f:
+                config = json.load(f)
+                return config.get('api_key')
+    except (json.JSONDecodeError, IOError, KeyError):
+        pass
+    
+    return None
 
 # Define which features require premium access
 PREMIUM_FEATURES = {
@@ -75,7 +93,7 @@ def require_premium_access(feature_name: str, api_key: Optional[str] = None,
     
     Args:
         feature_name: Name of the feature being accessed
-        api_key: API key for premium features
+        api_key: API key for premium features (if None, will try to load from config)
         api_base_url: Base URL for API verification
         
     Returns:
@@ -87,10 +105,14 @@ def require_premium_access(feature_name: str, api_key: Optional[str] = None,
     """
     # Check if feature is premium
     if feature_name in PREMIUM_FEATURES:
+        # If no API key provided, try to load from config
+        if not api_key:
+            api_key = _load_api_key_from_config()
+        
         if not api_key:
             raise TieredAccessError(
                 f"Feature '{feature_name}' requires premium access. "
-                f"Please provide a valid API key to use this feature."
+                f"Please configure your API key using: fairsight configure --api-key YOUR_KEY"
             )
         
         try:
