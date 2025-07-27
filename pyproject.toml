@@ -1,0 +1,226 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fairsight"
+version = "1.0.0"
+description = "Comprehensive AI Ethics and Bias Detection Toolkit with SAP Integration"
+readme = "README.MD"
+license = {text = "MIT"}
+authors = [
+    {name = "Vijay K S", email = "ksvijay2005@gmail.com"},
+    {name = "Abhay Pratap Singh"}
+]
+maintainers = [
+    {name = "Vijay K S", email = "ksvijay2005@gmail.com"}
+]
+keywords = [
+    "ai ethics",
+    "bias detection", 
+    "fairness",
+    "machine learning",
+    "audit",
+    "sap hana",
+    "explainability",
+    "responsible ai",
+    "illegal data detection",
+    "perceptual hashing",
+    "image similarity"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Quality Assurance",
+]
+requires-python = ">=3.8"
+dependencies = [
+    # Core dependencies
+    "pandas>=1.3.0",
+    "numpy>=1.21.0",
+    "scikit-learn>=1.0.0",
+    
+    # Explainability
+    "shap>=0.40.0",
+    "lime>=0.2.0",
+    
+    # Visualization and reporting
+    "matplotlib>=3.3.0",
+    "seaborn>=0.11.0",
+    "plotly>=5.0.0",
+    "markdown>=3.3.0",
+    "fpdf>=1.7.2",
+    
+    # SAP Integration
+    "hdbcli>=2.15.0",
+    
+    # Data processing and utilities
+    "scipy>=1.7.0",
+    "joblib>=1.0.0",
+    
+    # HTTP requests for API calls
+    "requests>=2.25.0",
+    
+    # Image processing and illegal data detection
+    "Pillow>=8.0.0",
+    "imagehash>=4.3.1",
+    
+    # Machine learning and AI models
+    "torch>=1.9.0",
+    "open-clip-torch>=2.0.0",
+    "diffusers>=0.10.0",
+    
+    # Async and performance
+    "asyncio-throttle>=1.0.0",
+    "numba>=0.56.0",
+    
+    # Optional dependencies for advanced features
+    "xgboost>=1.5.0",
+    "lightgbm>=3.0.0",
+    "catboost>=0.26.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0.0",
+    "pytest-cov>=2.0.0",
+    "black>=21.0.0",
+    "flake8>=3.8.0",
+    "mypy>=0.800",
+]
+docs = [
+    "sphinx>=4.0",
+    "sphinx-rtd-theme>=0.5",
+    "sphinx-autodoc-typehints>=1.12",
+]
+sap = [
+    "hdbcli>=2.15",
+    "sap-hana>=1.0",
+]
+full = [
+    "jupyter>=1.0.0",
+    "notebook>=6.0.0",
+    "xgboost>=1.5.0",
+    "lightgbm>=3.0.0",
+    "catboost>=0.26.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/KS-Vijay/fairsight"
+Documentation = "https://fairsight.readthedocs.io/"
+Repository = "https://github.com/KS-Vijay/fairsight"
+"Bug Reports" = "https://github.com/KS-Vijay/fairsight/issues"
+"Source" = "https://github.com/KS-Vijay/fairsight"
+
+[project.scripts]
+fairsight-audit = "fairsight.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["fairsight*"]
+
+[tool.setuptools.package-data]
+fairsight = [
+    "templates/*.html",
+    "templates/*.md", 
+    "config/*.json",
+    "fonts/*.ttf",
+    "fonts/*.pkl",
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "fairsight.__version__"}
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov=fairsight",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+
+[tool.coverage.run]
+source = ["fairsight"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/venv/*",
+    "*/env/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "torch.*",
+    "open_clip.*", 
+    "diffusers.*",
+    "PIL.*",
+    "imagehash.*",
+]
+ignore_missing_imports = true 
