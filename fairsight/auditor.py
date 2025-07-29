@@ -14,6 +14,7 @@ from datetime import datetime
 import json
 import warnings
 from .auth import verify, APIKeyVerificationError, require_premium_access, TieredAccessError
+from .registry_client import FairsightRegistryClient
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +42,8 @@ class FSAuditor:
                  fairness_threshold: float = 0.8,
                  enable_sap_integration: bool = True,
                  user_api_key: Optional[str] = None,
-                 api_base_url: str = "http://localhost:5000"):
+                 api_base_url: str = "http://localhost:5000",
+                 registry_api_url: str = "http://localhost:3000"):
         """
         Initialize FSAuditor.
 
@@ -56,6 +58,9 @@ class FSAuditor:
             privileged_groups: Dict mapping attributes to privileged values
             fairness_threshold: Threshold for fairness metrics (default 0.8)
             enable_sap_integration: Whether to enable SAP HANA integration
+            user_api_key: API key for premium features
+            api_base_url: Base URL for API verification backend (port 5000)
+            registry_api_url: Base URL for registry API backend (port 3000)
         """
         # Core parameters
         self.dataset = dataset
@@ -70,6 +75,7 @@ class FSAuditor:
         self.enable_sap_integration = enable_sap_integration
         self.user_api_key = user_api_key
         self.api_base_url = api_base_url
+        self.registry_api_url = registry_api_url
 
         # Results storage
         self.audit_results = {}
@@ -81,6 +87,8 @@ class FSAuditor:
         logger.info("🚀 FSAuditor initialized successfully")
         logger.info(f"📋 Sensitive features: {self.sensitive_features}")
         logger.info(f"📋 Justified attributes: {self.justified_attributes}")
+        logger.info(f"🔗 API Base URL: {self.api_base_url}")
+        logger.info(f"🔗 Registry API URL: {self.registry_api_url}")
 
     def _validate_initialization(self):
         """Validate initialization parameters."""
@@ -329,6 +337,7 @@ class FSAuditor:
                   include_bias_detection: bool = True,
                   generate_report: bool = True,
                   push_to_dashboard: bool = True,
+                  push_to_registry: bool = False,
                   connection_params: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
         """
         Run comprehensive audit with all components.
@@ -339,6 +348,7 @@ class FSAuditor:
             include_bias_detection: Whether to include bias detection
             generate_report: Whether to generate report
             push_to_dashboard: Whether to push to dashboard
+            push_to_registry: Whether to push to registry (premium feature)
             connection_params: Dictionary with SAP HANA connection details (required if push_to_dashboard is True)
 
         Returns:
@@ -409,6 +419,15 @@ class FSAuditor:
             session_id = self.push_to_dashboard(audit_results, connection_params=connection_params)
             if session_id:
                 audit_results['session_id'] = session_id
+
+        # Push to registry (premium feature)
+        if push_to_registry:
+            registry_result = self.push_to_registry(audit_results)
+            if registry_result and not registry_result.get('error', False):
+                audit_results['registry_result'] = registry_result
+                logger.info("✅ Successfully pushed to registry")
+            else:
+                logger.warning(f"⚠️ Registry push failed: {registry_result.get('message', 'Unknown error')}")
 
         logger.info("🎉 Comprehensive Fairsight audit completed!")
         return audit_results
@@ -492,6 +511,47 @@ class FSAuditor:
             )
 
         return summary
+
+    def push_to_registry(self, audit_results: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+        """
+        Push audit results to the registry.
+        
+        Args:
+            audit_results: Audit results to push (uses self.audit_results if not provided)
+            
+        Returns:
+            Registry response or None if failed
+        """
+        if not audit_results:
+            audit_results = self.audit_results
+            
+        if not audit_results:
+            logger.error("❌ No audit results to push to registry")
+            return None
+            
+        try:
+            # Initialize registry client with the registry API URL and API key
+            registry_client = FairsightRegistryClient(
+                api_base_url=self.registry_api_url,
+                api_key=self.user_api_key
+            )
+            
+            # Submit to registry
+            result = registry_client.submit_audit_results(audit_results)
+            
+            if result.get('error', False):
+                logger.error(f"❌ Registry push failed: {result.get('message', 'Unknown error')}")
+                return result
+            else:
+                logger.info(f"✅ Registry push successful: {result.get('message', 'OK')}")
+                return result
+                
+        except Exception as e:
+            logger.error(f"❌ Error pushing to registry: {e}")
+            return {
+                'error': True,
+                'message': f'Registry push error: {str(e)}'
+            }
 
 # Legacy compatibility class
 class Auditor(FSAuditor):

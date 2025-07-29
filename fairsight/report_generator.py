@@ -37,6 +37,27 @@ except ImportError:
 # Add FPDF import
 from fpdf import FPDF
 
+# Import NumpyEncoder from registry_client
+try:
+    from .registry_client import NumpyEncoder
+except ImportError:
+    # Fallback if registry_client is not available
+    class NumpyEncoder(json.JSONEncoder):
+        """Custom JSON encoder to handle numpy data types and custom objects."""
+        
+        def default(self, obj):
+            if isinstance(obj, np.integer):
+                return int(obj)
+            elif isinstance(obj, np.floating):
+                return float(obj)
+            elif isinstance(obj, np.ndarray):
+                return obj.tolist()
+            elif isinstance(obj, np.bool_):
+                return bool(obj)
+            elif hasattr(obj, 'to_dict'):
+                return obj.to_dict()
+            return super().default(obj)
+
 
 class ReportGenerator:
     """
@@ -1209,7 +1230,7 @@ class ReportGenerator:
         json_path = os.path.join(self.output_dir, f"{model_name}_fairness_summary.json")
         
         with open(json_path, 'w', encoding='utf-8') as f:
-            json.dump(summary_data, f, indent=2, ensure_ascii=False)
+            json.dump(summary_data, f, indent=2, ensure_ascii=False, cls=NumpyEncoder)
         
         logger.info(f"JSON summary generated: {json_path}")
         return json_path

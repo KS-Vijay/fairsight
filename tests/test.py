@@ -66,4 +66,4 @@ auditor = FSAuditor(
 
 # No need to pass API key explicitly!
 #result = detector.detect_illegal_content("image.jpg")
-audit_result = auditor.run_audit(push_to_dashboard=False)
+audit_result = auditor.run_audit(push_to_dashboard=False,push_to_registry=True)
