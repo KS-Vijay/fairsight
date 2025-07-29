@@ -83,8 +83,15 @@ def verify(api_key: str, base_url="http://localhost:5000") -> bool:
             except Exception:
                 reason = f"API key verification failed with status {resp.status_code}"
             raise APIKeyVerificationError(reason)
-    except requests.RequestException as e:
-        raise APIKeyVerificationError(f"API key verification request failed: {e}")
+    except requests.ConnectionError:
+        # Clean error message for connection issues
+        raise APIKeyVerificationError("Backend server is not available. Please ensure the backend is running.")
+    except requests.Timeout:
+        # Clean error message for timeout issues
+        raise APIKeyVerificationError("Backend server is not responding. Please check if the backend is running.")
+    except requests.RequestException:
+        # Generic error message for other request issues
+        raise APIKeyVerificationError("Unable to connect to backend server. Please check if the backend is running.")
 
 def require_premium_access(feature_name: str, api_key: Optional[str] = None, 
                           api_base_url: str = "http://localhost:5000") -> bool:
@@ -119,7 +126,7 @@ def require_premium_access(feature_name: str, api_key: Optional[str] = None,
             if not verify(api_key, base_url=api_base_url):
                 raise TieredAccessError(f"Invalid API key for premium feature '{feature_name}'")
         except APIKeyVerificationError as e:
-            raise TieredAccessError(f"API key verification failed for '{feature_name}': {e}")
+            raise TieredAccessError(f"Premium feature '{feature_name}' requires backend server to be running. {e}")
     
     return True
 

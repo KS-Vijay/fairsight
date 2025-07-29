@@ -1223,7 +1223,10 @@ class ReportGenerator:
         explainability_results: Optional[List[Any]] = None,
         justified_attributes: Optional[List[str]] = None,
         additional_info: Optional[Dict[str, Any]] = None,
-        formats: List[str] = ["markdown", "html", "json"]
+        formats: List[str] = ["markdown", "html", "json"],
+        send_to_registry: bool = False,
+        registry_client: Optional[Any] = None,
+        user_id: Optional[str] = None
     ) -> Dict[str, str]:
         """
         Generate complete report in multiple formats.
@@ -1310,6 +1313,50 @@ class ReportGenerator:
                 generated_files["json"] = json_path
             
             logger.info(f"Report generation completed. Generated formats: {list(generated_files.keys())}")
+            
+            # Submit to registry if requested
+            if send_to_registry and registry_client and user_id:
+                try:
+                    logger.info("Submitting report to registry...")
+                    
+                    # Prepare data for registry submission
+                    bias_results_list = []
+                    if bias_results:
+                        # Convert bias results to list format for registry
+                        for attr, results in bias_results.items():
+                            if isinstance(results, dict):
+                                bias_results_list.append({
+                                    'attribute': attr,
+                                    'metric_name': results.get('metric_name', 'Unknown'),
+                                    'value': results.get('value', 0),
+                                    'biased': results.get('biased', False),
+                                    'justified': attr in (justified_attributes or []),
+                                    'details': results
+                                })
+                    
+                    # Submit to registry
+                    registry_response = registry_client.submit_audit_results(
+                        bias_results=bias_results_list,
+                        fairness_results=fairness_results or {},
+                        detailed_reasoning=registry_client.generate_detailed_reasoning(
+                            bias_results_list, 
+                            fairness_results or {}, 
+                            dataset_info
+                        ),
+                        model_name=model_name,
+                        user_id=user_id,
+                        ethical_score=ethical_score,
+                        bias_score=score_breakdown.get('bias_score', 0),
+                        fairness_score=score_breakdown.get('fairness_score', 0),
+                        grade=score_breakdown.get('grade', 'UNKNOWN')
+                    )
+                    
+                    logger.info(f"✅ Successfully submitted to registry: {registry_response.get('message', 'OK')}")
+                    generated_files["registry"] = registry_response
+                    
+                except Exception as e:
+                    logger.error(f"❌ Failed to submit to registry: {e}")
+                    generated_files["registry_error"] = str(e)
             
         except Exception as e:
             logger.error(f"Error during report generation: {e}")

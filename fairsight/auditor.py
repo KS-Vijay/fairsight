@@ -349,7 +349,17 @@ class FSAuditor:
             require_premium_access("comprehensive_audit", self.user_api_key, self.api_base_url)
         except TieredAccessError as e:
             logger.error(f"❌ {e}")
-            raise
+            # Return a clean error response instead of raising the exception
+            return {
+                'error': True,
+                'error_type': 'TieredAccessError',
+                'message': str(e),
+                'audit_metadata': {
+                    'timestamp': datetime.now().isoformat(),
+                    'fairsight_version': '1.0.0',
+                    'error': True
+                }
+            }
 
         logger.info("🚀 Starting comprehensive Fairsight audit...")
 
