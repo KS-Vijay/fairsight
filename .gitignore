@@ -16,3 +16,6 @@ venv/
 # IDE/project files
 .vscode/
 .idea/
+
+fairsight_env/
+foto/

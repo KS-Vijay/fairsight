@@ -127,6 +127,7 @@ fairsight = "fairsight.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["fairsight*"]
+exclude = ["tests", "tests.*"]
 
 [tool.setuptools.package-data]
 fairsight = [

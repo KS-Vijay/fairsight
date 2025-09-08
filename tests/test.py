@@ -50,20 +50,13 @@
 # print(classification_report(y_true, y_pred))
 
 import pandas as pd
-from fairsight import IllegalDataDetector, FSAuditor
-df = pd.DataFrame({
-        'category': ['A', 'B', 'A', 'B', 'A', 'B'],
-        'intent': [1, 0, 1, 0, 1, 0],
-        'feature': [10, 20, 10, 30, 15, 25],
-        'gender': ['M', 'F', 'M', 'F', 'M', 'F']
-    })
-# These will automatically load the API key from ~/.fairsight/config.json
-#detector = IllegalDataDetector()
+from fairsight import FSAuditor
+df = pd.read_csv('tests/Medical_insurance.csv')
+
 auditor = FSAuditor(
             dataset=df, 
-            sensitive_features=['category', 'gender'], 
-            target='intent')
+            sensitive_features=['sex', 'children'], 
+            justified_attributes='smoker',
+            target='charges')
 
-# No need to pass API key explicitly!
-#result = detector.detect_illegal_content("image.jpg")
 audit_result = auditor.run_audit(push_to_dashboard=False,push_to_registry=True)

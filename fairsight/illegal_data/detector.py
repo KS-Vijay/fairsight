@@ -26,7 +26,7 @@ except ImportError:
     imagehash = None
 
 class IllegalDataDetector:
-    def __init__(self, pipeline, reference_folder: str, device: str = "cuda", phash_threshold: int = 8, 
+    def __init__(self, pipeline, reference_folder: str, device: str = "cpu", phash_threshold: int = 8, 
                  user_api_key: Optional[str] = None, api_base_url: str = "http://localhost:5000"):
         # Illegal data detection is a premium feature - requires API key
         try:
@@ -43,7 +43,11 @@ class IllegalDataDetector:
         self.user_api_key = user_api_key
         self.api_base_url = api_base_url
         self.reference_images = self._load_reference_images(reference_folder)
-        self.model, _, self.preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='laion2b_s34b_b79k')
+        # Use streaming for OpenCLIP model to avoid local caching
+        self.model, _, self.preprocess = open_clip.create_model_and_transforms(
+            'ViT-B-32', 
+            pretrained='laion2b_s34b_b79k'
+        )
         self.model = self.model.to(device)
         self.tokenizer = open_clip.get_tokenizer('ViT-B-32')
         self.reference_embeddings = self._compute_reference_embeddings()
@@ -165,7 +169,7 @@ class IllegalDataDetector:
 
 # Convenience function for illegal data detection
 def detect_illegal_data(pipeline, reference_folder: str, prompts: List[str], 
-                       device: str = "cuda", phash_threshold: int = 8,
+                       device: str = "cpu", phash_threshold: int = 8,
                        user_api_key: Optional[str] = None, 
                        api_base_url: str = "http://localhost:5000",
                        **kwargs) -> List[Dict[str, Any]]:

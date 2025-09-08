@@ -84,7 +84,7 @@ class Dashboard:
             try:
                 cursor.execute(f"CREATE SCHEMA {self.default_schema}")
             except dbapi.Error as e:
-                if "already exists" in str(e) or "SQL error code: 258" in str(e):
+                if "already exists" in str(e) or "SQL error code: 258" in str(e) or "SQL error code: 386" in str(e) or "duplicate schema name" in str(e):
                     pass  # Schema already exists
                 else:
                     raise
@@ -106,7 +106,7 @@ class Dashboard:
                     )
                 """)
             except dbapi.Error as e:
-                if "already exists" in str(e) or "SQL error code: 258" in str(e):
+                if "already exists" in str(e) or "SQL error code: 258" in str(e) or "SQL error code: 288" in str(e) or "duplicate table name" in str(e):
                     pass
                 else:
                     raise
@@ -128,7 +128,7 @@ class Dashboard:
                     )
                 """)
             except dbapi.Error as e:
-                if "already exists" in str(e) or "SQL error code: 258" in str(e):
+                if "already exists" in str(e) or "SQL error code: 258" in str(e) or "SQL error code: 288" in str(e) or "duplicate table name" in str(e):
                     pass
                 else:
                     raise
@@ -149,7 +149,7 @@ class Dashboard:
                     )
                 """)
             except dbapi.Error as e:
-                if "already exists" in str(e) or "SQL error code: 258" in str(e):
+                if "already exists" in str(e) or "SQL error code: 258" in str(e) or "SQL error code: 288" in str(e) or "duplicate table name" in str(e):
                     pass
                 else:
                     raise
@@ -169,7 +169,7 @@ class Dashboard:
                     )
                 """)
             except dbapi.Error as e:
-                if "already exists" in str(e) or "SQL error code: 258" in str(e):
+                if "already exists" in str(e) or "SQL error code: 258" in str(e) or "SQL error code: 288" in str(e) or "duplicate table name" in str(e):
                     pass
                 else:
                     raise
